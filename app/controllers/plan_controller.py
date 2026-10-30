@@ -9,7 +9,10 @@ from app.repositories.ajuste_repository import AjusteRepository
 from app.repositories.pausa_repository import PausaRepository
 from app.repositories.plan_repository import PlanRepository
 from app.schemas.ajuste_plan import AjusteActualizar, AjusteCrear, AjusteRespuesta
-from app.schemas.plan import PlanActualizar, PlanCrear, PlanRespuesta
+from app.schemas.plan import (
+    ExplicacionAjuste, PlanActualizar, PlanCrear, PlanRespuesta, ProyeccionRespuesta, SimulacionEntrada,
+    SimulacionRespuesta,
+)
 from app.services.plan_service import AjusteService, PlanService
 
 router = APIRouter(prefix="/planes", tags=["Planes y ajustes"])
@@ -83,3 +86,24 @@ def actualizar_ajuste(numero: int, semana: int, cambios: AjusteActualizar, u: Us
 def eliminar_ajuste(numero: int, semana: int, u: Usuario = Depends(usuario_actual),
                     service: AjusteService = Depends(get_ajustes)):
     service.eliminar(u.id, numero, semana)
+
+
+# ---------- Lógica difusa (solo calcula, no guarda) ----------
+@router.get("/{numero}/ajustes/{semana}/explicacion", response_model=ExplicacionAjuste)
+def explicar_ajuste(numero: int, semana: int, u: Usuario = Depends(usuario_actual),
+                    service: AjusteService = Depends(get_ajustes)):
+    """Pasos del controlador Mamdani para ese ajuste: membresías, fuerza de cada regla y centroide."""
+    return service.explicacion(u.id, numero, semana)
+
+
+@router.post("/{numero}/simulacion", response_model=SimulacionRespuesta)
+def simular_plan(numero: int, datos: SimulacionEntrada, u: Usuario = Depends(usuario_actual),
+                 service: AjusteService = Depends(get_ajustes)):
+    """Cómo bajaría el límite las próximas semanas con cada sensibilidad (suave ×0.5, normal, estricta ×1.5)."""
+    return service.simulacion(u.id, numero, datos)
+
+
+@router.get("/{numero}/proyeccion", response_model=ProyeccionRespuesta)
+def proyectar_plan(numero: int, u: Usuario = Depends(usuario_actual), service: AjusteService = Depends(get_ajustes)):
+    """Límite que tendría la próxima semana si se mantienen la adherencia y las pausas actuales."""
+    return service.proyeccion(u.id, numero)

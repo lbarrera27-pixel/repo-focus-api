@@ -42,6 +42,11 @@ class UsuarioService:
     def guardar_foto_url(self, usuario: Usuario, url: str) -> Usuario:
         return self.repo.actualizar(usuario, {"foto_url": url})
 
+    def quitar_foto(self, usuario: Usuario) -> None:
+        if usuario.foto_url:
+            blob_storage.borrar_foto(usuario.foto_url)
+            self.repo.actualizar(usuario, {"foto_url": None})
+
     def subir_foto(self, usuario: Usuario, contenido: bytes, content_type: str) -> Usuario:
         url = blob_storage.subir_foto(usuario.id, contenido, content_type)
         return self.repo.actualizar(usuario, {"foto_url": url})

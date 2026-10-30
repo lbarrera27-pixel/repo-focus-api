@@ -3,6 +3,7 @@ from sqlalchemy.orm import relationship
 
 from app.database import Base
 from app.models._comun import DelUsuarioMixin, fk_usuario
+from app.utils.reglas_plan import limite_vigente
 
 
 class Plan(DelUsuarioMixin, Base):
@@ -21,3 +22,8 @@ class Plan(DelUsuarioMixin, Base):
         "AjustePlan", back_populates="plan",
         cascade="all, delete-orphan", order_by="AjustePlan.semana",
     )
+
+    @property
+    def limite_actual_min(self) -> float:
+        """Límite diario de hoy: el base con todos los ajustes semanales aplicados."""
+        return round(limite_vigente(self, self.ajustes), 1)

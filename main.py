@@ -20,13 +20,13 @@ from sqlalchemy.exc import DBAPIError, IntegrityError
 
 from app.config import CORS_ORIGINS
 from app.controllers import (
-    app_controller, auth_controller, bloqueo_controller, companero_controller, configuracion_controller,
-    dominio_controller, estadisticas_controller, evento_controller, franja_controller, ia_controller,
-    pausa_controller, plan_controller, riesgo_controller, salud_controller, sesion_controller,
+    analitica_controller, app_controller, auth_controller, bloqueo_controller, companero_controller,
+    configuracion_controller, dominio_controller, estadisticas_controller, evento_controller, franja_controller,
+    ia_controller, pausa_controller, plan_controller, riesgo_controller, salud_controller, sesion_controller,
     token_controller, usuario_controller,
 )
 from app.database import sincronizar_esquema
-from app.utils.errores import Conflicto, NoEncontrado
+from app.utils.errores import Conflicto, DatosInvalidos, NoEncontrado
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger("focus.api")
@@ -70,6 +70,11 @@ async def manejar_conflicto(_: Request, exc: Conflicto):
     return JSONResponse(status_code=409, content={"detail": str(exc)})
 
 
+@app.exception_handler(DatosInvalidos)
+async def manejar_datos_invalidos(_: Request, exc: DatosInvalidos):
+    return JSONResponse(status_code=422, content={"detail": str(exc)})
+
+
 @app.exception_handler(IntegrityError)
 async def manejar_integridad(_: Request, exc: IntegrityError):
     return JSONResponse(status_code=409, content={"detail": "El registro viola una restricción de la base de datos"})
@@ -96,6 +101,6 @@ for modulo in (
     salud_controller, auth_controller, usuario_controller, app_controller, evento_controller,
     franja_controller, plan_controller, pausa_controller, dominio_controller, sesion_controller,
     token_controller, estadisticas_controller, configuracion_controller, bloqueo_controller, riesgo_controller,
-    companero_controller, ia_controller,
+    companero_controller, ia_controller, analitica_controller,
 ):
     app.include_router(modulo.router)

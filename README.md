@@ -275,7 +275,7 @@ Cada tabla del usuario tiene `id` (clave primaria global) y `numero` (consecutiv
 `UNIQUE(usuario_id, numero)`).
 
 <details>
-<summary><b>📋 Ver las 69 operaciones</b></summary>
+<summary><b>📋 Ver las 77 operaciones</b></summary>
 
 | Método | Ruta | Tabla / módulo |
 |---|---|---|
@@ -285,6 +285,7 @@ Cada tabla del usuario tiene `id` (clave primaria global) y `numero` (consecutiv
 | GET / PUT / DELETE | `/usuarios/me` | USUARIO |
 | POST | `/usuarios/me/foto` | USUARIO (guarda enlace) |
 | POST | `/usuarios/me/foto/archivo` | USUARIO + Blob Storage |
+| DELETE | `/usuarios/me/foto` | USUARIO (quita la foto y borra el blob si es nuestro) |
 | POST / GET | `/apps` | APP |
 | GET / PUT / DELETE | `/apps/{numero}` | APP |
 | POST / GET | `/eventos` | EVENTO_USO (filtros `app_numero`, `franja_id`, `desde`, `hasta`) |
@@ -293,10 +294,13 @@ Cada tabla del usuario tiene `id` (clave primaria global) y `numero` (consecutiv
 | POST | `/franjas/generar` | FRANJA (crea las 12 franjas de un día) |
 | GET / PUT / DELETE | `/franjas/{franja_id}` | FRANJA |
 | POST / GET | `/planes` | PLAN |
-| GET | `/planes/activo` | PLAN |
+| GET | `/planes/activo` | PLAN (incluye `limite_actual_min`) |
 | GET / PUT / DELETE | `/planes/{numero}` | PLAN |
 | POST / GET | `/planes/{numero}/ajustes` | AJUSTE_PLAN |
 | GET / PUT / DELETE | `/planes/{numero}/ajustes/{semana}` | AJUSTE_PLAN |
+| GET | `/planes/{numero}/ajustes/{semana}/explicacion` | **IA (difusa):** membresías, fuerza de cada regla y centroide |
+| POST | `/planes/{numero}/simulacion` | **IA (difusa):** límite de las próximas semanas con sensibilidad suave / normal / estricta |
+| GET | `/planes/{numero}/proyeccion` | **IA (difusa):** límite de la próxima semana si sigue igual |
 | POST / GET | `/pausas` | PAUSA |
 | GET / PUT / DELETE | `/pausas/{numero}` | PAUSA |
 | POST / GET | `/dominios` | DOMINIO_BLOQUEADO |
@@ -306,9 +310,13 @@ Cada tabla del usuario tiene `id` (clave primaria global) y `numero` (consecutiv
 | POST / GET | `/tokens-dispositivo` | TOKEN_DISPOSITIVO |
 | GET / PUT / DELETE | `/tokens-dispositivo/{numero}` | TOKEN_DISPOSITIVO |
 | GET | `/estadisticas?desde=&hasta=` | Indicadores del usuario |
+| GET | `/analitica/uso-por-app?desde=&hasta=&limite=` | Minutos por app y variación contra el periodo anterior |
+| GET | `/analitica/uso-por-categoria?desde=&hasta=` | Minutos y % por categoría |
+| GET | `/analitica/uso-diario?desde=&hasta=` | Uso de cada día contra el límite que regía ese día |
+| GET | `/analitica/heatmap?desde=&hasta=` | Minutos por día × hora (UTC), pico y top 3 |
 | GET / PUT | `/configuracion/me` | CONFIGURACION_USUARIO (ajustes del portal web, JSON de máx. ~20 KB) |
 | GET | `/bloqueo/reglas?fecha=` | Bloqueo: qué hacer con cada app y qué dominios bloquear |
-| GET | `/riesgo` | **IA:** riesgo de recaída (regresión logística) |
+| GET | `/riesgo` | **IA:** riesgo de recaída (regresión logística). Si el plan aún no cierra su primera semana responde `estado: "insuficiente"` con el avance |
 | POST | `/companero/mensaje` | **IA:** Compañero Foqui (LLM que explica el plan y el riesgo) |
 | POST / GET | `/api/ajuste-semanal` | **Azure Function** (serverless) |
 | POST | `/ia/prob-ignorar` | IA (ML): probabilidad de ignorar una pausa, con el contexto completo |
@@ -327,6 +335,8 @@ Cada tabla del usuario tiene `id` (clave primaria global) y `numero` (consecutiv
 - **Integridad referencial:** no se puede borrar una app con eventos o pausas, ni una franja con eventos (`409`).
   Eventos y pausas validan que la app (y la franja) existan (`404`).
 - **Contraseñas** con bcrypt; el email se guarda en minúsculas y es único.
+- **Apps:** el paquete debe ser un nombre Android válido (`com.instagram.android`) y no repetirse por usuario (`409`).
+- **Dominios:** se acepta una URL completa y se guarda solo el dominio (`https://www.YouTube.com/watch` → `youtube.com`).
 - **Un solo plan activo:** al crear un plan, los anteriores se desactivan.
 - **Ajuste semanal:** si no se envía `cambio_pct`, lo calcula un controlador difuso Mamdani con la
   adherencia y las pausas ignoradas de esa semana (`app/utils/reglas_plan.py`). La Azure Function usa las mismas reglas.

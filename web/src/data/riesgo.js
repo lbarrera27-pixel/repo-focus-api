@@ -4,7 +4,7 @@ import { api } from '../api.js'
 export const ALTO = 0.6   // desde aquí el nivel es "alto" (app/utils/riesgo.py)
 
 // Umbral y métricas en prueba del modelo (app/utils/modelo_riesgo.json); se muestran aunque aún no haya riesgo
-export const MODELO = { umbral: 0.42, metricas: { auc_roc: 0.8479, precision: 0.7205, recall: 0.759 } }
+export const MODELO = { umbral: 0.42, metricas: { exactitud: 0.7607, auc_roc: 0.8479, precision: 0.7205, recall: 0.759 } }
 
 // Textos de cada una de las 7 variables del modelo y cómo se muestra su valor
 export const FACTORES = {

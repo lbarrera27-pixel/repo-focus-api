@@ -59,8 +59,9 @@ export const api = {
     throw e
   }),
   ajustes: (id, numero) => pedir(`/planes/${numero}/ajustes`, { usuarioId: id }),
-  // Regresión logística: probabilidad de pasarse del límite la semana siguiente (404 sin plan o sin ajustes)
-  riesgo: (id) => pedir('/riesgo', { usuarioId: id }).catch((e) => {
+  // Regresión logística: probabilidad de pasarse del límite la semana siguiente
+  // (404 sin plan; estado "insuficiente" si el plan aún no cierra su primera semana)
+  riesgo: (id) => pedir('/riesgo', { usuarioId: id }).then((r) => (r.estado === 'insuficiente' ? null : r), (e) => {
     if (e.status === 404) return null
     throw e
   }),

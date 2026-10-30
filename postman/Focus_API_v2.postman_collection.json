@@ -476,6 +476,35 @@
               ]
             }
           }
+        },
+        {
+          "name": "DELETE /usuarios/me/foto",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 204', () => pm.expect(pm.response.code).to.be.oneOf([204]));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/usuarios/me/foto",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "usuarios",
+                "me",
+                "foto"
+              ]
+            }
+          }
         }
       ]
     },
@@ -1490,6 +1519,113 @@
                   "language": "json"
                 }
               }
+            }
+          }
+        },
+        {
+          "name": "GET /planes/{numero}/ajustes/{semana}/explicacion",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.expect(pm.response.code).to.be.oneOf([200]));",
+                  "pm.test('Seis reglas con su fuerza', () => pm.expect(pm.response.json().reglas).to.have.lengthOf(6));",
+                  "pm.test('Centroide numérico', () => pm.expect(pm.response.json().salida.centroide_pct).to.be.a('number'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/planes/1/ajustes/2/explicacion",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "planes",
+                "1",
+                "ajustes",
+                "2",
+                "explicacion"
+              ]
+            }
+          }
+        },
+        {
+          "name": "POST /planes/{numero}/simulacion",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.expect(pm.response.code).to.be.oneOf([200]));",
+                  "pm.test('Tres sensibilidades', () => pm.expect(pm.response.json().perfiles.map(p => p.perfil)).to.eql(['suave','normal','estricta']));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/planes/1/simulacion",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "planes",
+                "1",
+                "simulacion"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"semanas\": 4,\n  \"meta_min\": 150\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "GET /planes/{numero}/proyeccion",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.expect(pm.response.code).to.be.oneOf([200]));",
+                  "pm.test('Límite proyectado', () => pm.expect(pm.response.json().limite_proyectado_min).to.be.above(0));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/planes/1/proyeccion",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "planes",
+                "1",
+                "proyeccion"
+              ]
             }
           }
         },
@@ -3517,7 +3653,207 @@
       ]
     },
     {
-      "name": "18 Limpieza (correr al final)",
+      "name": "18 Analítica",
+      "description": "Gráficas del portal calculadas desde evento_uso. Sin fechas: los últimos 7 días. Horas en UTC.",
+      "item": [
+        {
+          "name": "GET /analitica/uso-por-app",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.expect(pm.response.code).to.be.oneOf([200]));",
+                  "pm.test('Apps ordenadas por minutos', () => { const m = pm.response.json().apps.map(a => a.min); pm.expect(m).to.eql([...m].sort((a, b) => b - a)); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/analitica/uso-por-app?desde=2026-10-13&hasta=2026-10-19",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "analitica",
+                "uso-por-app"
+              ],
+              "query": [
+                {
+                  "key": "desde",
+                  "value": "2026-10-13"
+                },
+                {
+                  "key": "hasta",
+                  "value": "2026-10-19"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET /analitica/uso-por-categoria",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.expect(pm.response.code).to.be.oneOf([200]));",
+                  "pm.test('Trae categorías', () => pm.expect(pm.response.json().categorias).to.be.an('array'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/analitica/uso-por-categoria?desde=2026-10-13&hasta=2026-10-19",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "analitica",
+                "uso-por-categoria"
+              ],
+              "query": [
+                {
+                  "key": "desde",
+                  "value": "2026-10-13"
+                },
+                {
+                  "key": "hasta",
+                  "value": "2026-10-19"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET /analitica/uso-diario",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.expect(pm.response.code).to.be.oneOf([200]));",
+                  "pm.test('Un renglón por día', () => pm.expect(pm.response.json().dias).to.have.lengthOf(7));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/analitica/uso-diario?desde=2026-10-13&hasta=2026-10-19",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "analitica",
+                "uso-diario"
+              ],
+              "query": [
+                {
+                  "key": "desde",
+                  "value": "2026-10-13"
+                },
+                {
+                  "key": "hasta",
+                  "value": "2026-10-19"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET /analitica/heatmap",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.expect(pm.response.code).to.be.oneOf([200]));",
+                  "pm.test('7 × 24 celdas', () => { const c = pm.response.json().celdas; pm.expect(c).to.have.lengthOf(7); pm.expect(c[0]).to.have.lengthOf(24); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/analitica/heatmap?desde=2026-10-13&hasta=2026-10-19",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "analitica",
+                "heatmap"
+              ],
+              "query": [
+                {
+                  "key": "desde",
+                  "value": "2026-10-13"
+                },
+                {
+                  "key": "hasta",
+                  "value": "2026-10-19"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET /analitica/heatmap (rango al revés → 422)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 422', () => pm.expect(pm.response.code).to.be.oneOf([422]));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/analitica/heatmap?desde=2026-10-19&hasta=2026-10-13",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "analitica",
+                "heatmap"
+              ],
+              "query": [
+                {
+                  "key": "desde",
+                  "value": "2026-10-19"
+                },
+                {
+                  "key": "hasta",
+                  "value": "2026-10-13"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "19 Limpieza (correr al final)",
       "description": "Borra el plan y desactiva la cuenta de prueba. Después de esto el usuario ya no puede usar la API (401).",
       "item": [
         {

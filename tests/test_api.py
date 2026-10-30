@@ -227,7 +227,11 @@ def test_riesgo_de_recaida(client):
     assert client.get("/riesgo", headers=h).status_code == 404  # sin plan
     hoy = ahora().date().isoformat()
     client.post("/planes", headers=h, json={"fecha_inicio": hoy, "limite_base": 240})
-    assert client.get("/riesgo", headers=h).status_code == 404  # sin ajustes
+    # sin ajustes: 200 con el avance hacia el primer cálculo, no 404
+    r = client.get("/riesgo", headers=h)
+    assert r.status_code == 200 and r.json()["estado"] == "insuficiente"
+    assert r.json()["progreso"] == {"dias": {"actual": 0, "requeridos": 7}, "semanas": {"actual": 0, "requeridos": 1}}
+    assert r.json()["probabilidad"] is None and r.json()["umbral_alto"] >= r.json()["umbral"]
     client.post("/apps", headers=h, json={"nombre": "TikTok", "paquete": "com.zhiliaoapp.musically"})
     # semana 1: una hora de noche y una de día, 1 de 2 pausas ignorada, 1 de 2 sesiones completada
     client.post("/eventos", headers=h, json={"app_numero": 1, "inicio": f"{hoy}T01:00:00", "fin": f"{hoy}T02:00:00"})
@@ -260,6 +264,11 @@ def test_riesgo_de_recaida(client):
     assert s2["historial"] == [{"semana": 1, "probabilidad": s1["probabilidad"]},
                                {"semana": 2, "probabilidad": s2["probabilidad"]}]
     assert 0.5 < s2["metricas"]["auc_roc"] <= 1 and 0 < s2["metricas"]["precision"] <= 1
+    assert 0.5 < s2["metricas"]["exactitud"] <= 1 and s2["estado"] == "listo"
+    # recomendaciones: solo para factores que suben el riesgo, en el mismo orden de peso
+    suben = [f["variable"] for f in s2["factores"] if f["efecto"] == "sube"][:2]
+    assert [rec["factor"] for rec in s2["recomendaciones"]] == suben
+    assert all(rec["titulo"] and rec["texto"] for rec in s2["recomendaciones"])
 
 
 def test_estadisticas(client, u1, u2):
@@ -457,3 +466,111 @@ def test_reglas_de_bloqueo(client):
     client.put("/sesiones-foco/1", headers=h, json={"completada": True})
     assert client.get("/bloqueo/reglas", headers=h, params={"fecha": "2026-10-20"}).json()["sesion_foco_activa"] is False
     assert client.get("/bloqueo/reglas").status_code == 422
+
+
+def test_plan_limite_actual_y_logica_difusa(client):
+    from datetime import timedelta
+    h = registrar(client, "difuso@focus.app")
+    inicio = ahora().date() - timedelta(days=10)
+    client.post("/planes", headers=h, json={"fecha_inicio": inicio.isoformat(), "limite_base": 200})
+    assert client.get("/planes/activo", headers=h).json()["limite_actual_min"] == 200.0
+    assert client.get("/planes/1/proyeccion", headers=h).json()["supuesto"]["origen"] == "por_defecto"
+    cambio = client.post("/planes/1/ajustes", headers=h,
+                         json={"semana": 1, "uso_meta": 200, "adherencia": 0.86}).json()["cambio_pct"]
+    despues = round(200 * (1 + cambio / 100), 1)
+    assert client.get("/planes/activo", headers=h).json()["limite_actual_min"] == despues
+
+    # explicación: membresías, fuerza de cada regla y el mismo centroide que se guardó
+    e = client.get("/planes/1/ajustes/1/explicacion", headers=h).json()
+    assert e["membresias"]["adherencia"] == {"baja": 0.0, "regular": 0.0, "buena": 0.9, "excelente": 0.1}
+    assert e["membresias"]["ignoradas"]["pocas"] == 1.0 and len(e["reglas"]) == 6
+    assert e["salida"]["centroide_pct"] == cambio and e["manual"] is False
+    assert e["limite"] == {"antes_min": 200.0, "despues_min": despues}
+    assert max(mu for _, mu in e["salida"]["conjunto_agregado"]) == 0.9
+    assert client.get("/planes/1/ajustes/9/explicacion", headers=h).status_code == 404
+
+    # proyección: misma adherencia la semana 2
+    p = client.get("/planes/1/proyeccion", headers=h).json()
+    assert p["semana"] == 2 and p["proximo_ajuste"] == (inicio + timedelta(weeks=2)).isoformat()
+    assert p["limite_actual_min"] == despues and p["cambio_pct"] == cambio
+    assert p["supuesto"] == {"adherencia": 0.86, "pct_ignoradas": 0.0, "origen": "ultimo_ajuste"}
+
+    # simulación: 3 sensibilidades; la estricta llega antes (o igual) a la meta
+    s = client.post("/planes/1/simulacion", headers=h, json={"semanas": 6, "meta_min": 150}).json()
+    suave, normal, estricta = s["perfiles"]
+    assert [x["perfil"] for x in s["perfiles"]] == ["suave", "normal", "estricta"]
+    assert normal["semanas"][0] == {"semana": 2, "cambio_pct": cambio, "limite_min": p["limite_proyectado_min"]}
+    assert suave["semanas"][0]["cambio_pct"] == round(cambio * 0.5, 1)
+    assert estricta["semana_meta"] is not None and estricta["semana_meta"] <= (normal["semana_meta"] or 99)
+    assert estricta["semanas"][-1]["limite_min"] < normal["semanas"][-1]["limite_min"] < suave["semanas"][-1]["limite_min"]
+    # supuestos del cliente y validación
+    r = client.post("/planes/1/simulacion", headers=h, json={"perfiles": ["normal"], "adherencia": 0.2})
+    assert r.json()["perfiles"][0]["semanas"][0]["cambio_pct"] == 5.0   # adherencia baja -> relajar
+    assert client.post("/planes/1/simulacion", headers=h, json={"perfiles": ["extremo"]}).status_code == 422
+
+
+def test_analitica(client):
+    from datetime import timedelta
+    h = registrar(client, "analitica@focus.app")
+    d0 = ahora().date() - timedelta(days=3)
+    d1 = d0 + timedelta(days=1)
+    client.post("/planes", headers=h, json={"fecha_inicio": (d0 - timedelta(days=14)).isoformat(), "limite_base": 120})
+    client.post("/apps", headers=h, json={"nombre": "Instagram", "paquete": "com.instagram.android", "categoria": "redes"})
+    client.post("/apps", headers=h, json={"nombre": "YouTube", "paquete": "com.google.android.youtube", "categoria": "video"})
+    for app, inicio, fin in [
+        (1, f"{d0}T22:30:00", f"{d0}T23:30:00"),     # 30 min a las 22 h y 30 a las 23 h
+        (2, f"{d0}T23:45:00", f"{d1}T00:15:00"),     # cruza la medianoche: 15 + 15
+        (1, f"{d0 - timedelta(days=3)}T10:00:00", f"{d0 - timedelta(days=3)}T10:30:00"),  # periodo anterior
+    ]:
+        assert client.post("/eventos", headers=h, json={"app_numero": app, "inicio": inicio, "fin": fin}).status_code == 201
+    rango = {"desde": (d0 - timedelta(days=1)).isoformat(), "hasta": d1.isoformat()}
+
+    a = client.get("/analitica/uso-por-app", headers=h, params=rango).json()
+    assert a["total_min"] == 90.0
+    insta, yt = a["apps"]
+    assert (insta["nombre"], insta["min"], insta["variacion_pct"]) == ("Instagram", 60.0, 100.0)
+    assert (yt["nombre"], yt["min"], yt["variacion_pct"]) == ("YouTube", 30.0, None)
+    assert len(client.get("/analitica/uso-por-app", headers=h, params={**rango, "limite": 1}).json()["apps"]) == 1
+
+    c = client.get("/analitica/uso-por-categoria", headers=h, params=rango).json()
+    assert c["categorias"] == [{"categoria": "redes", "min": 60.0, "pct": 66.7},
+                               {"categoria": "video", "min": 30.0, "pct": 33.3}]
+
+    d = client.get("/analitica/uso-diario", headers=h, params=rango).json()
+    assert [(x["uso_min"], x["con_datos"]) for x in d["dias"]] == [(0.0, False), (75.0, True), (15.0, True)]
+    assert d["dias"][1]["limite_min"] == 120.0 and d["dias"][1]["cumplio"] is True
+    assert (d["promedio_min"], d["dias_con_datos"], d["dias_cumplidos"]) == (45.0, 2, 2)
+
+    m = client.get("/analitica/heatmap", headers=h, params=rango).json()
+    dia = d0.weekday()
+    assert m["celdas"][dia][22] == 30.0 and m["celdas"][dia][23] == 45.0 and m["celdas"][d1.weekday()][0] == 15.0
+    assert m["max_min"] == 45.0 and m["pico"] == {"dia": m["dias"][dia], "hora": 23, "min": 45.0}
+    assert sum(map(sum, m["celdas"])) == 90.0 and len(m["top"]) == 3
+
+    # sin fechas: últimos 7 días; rango al revés -> 422
+    assert len(client.get("/analitica/uso-diario", headers=h).json()["dias"]) == 7
+    assert client.get("/analitica/heatmap", headers=h, params={"desde": d1.isoformat(), "hasta": d0.isoformat()}).status_code == 422
+
+
+def test_quitar_foto_y_validaciones(client):
+    h = registrar(client, "validar@focus.app")
+    client.post("/usuarios/me/foto", headers=h, json={"url": "https://ejemplo.com/yo.png"})
+    assert client.delete("/usuarios/me/foto", headers=h).status_code == 204
+    assert client.get("/usuarios/me", headers=h).json()["foto_url"] is None
+    assert client.delete("/usuarios/me/foto", headers=h).status_code == 204   # sin foto no falla
+
+    # dominios: se acepta la URL completa y se guarda solo el dominio
+    r = client.post("/dominios", headers=h, json={"dominio": "https://www.Reddit.com/r/python?x=1"})
+    assert r.status_code == 201 and r.json()["dominio"] == "reddit.com"
+    assert client.post("/dominios", headers=h, json={"dominio": "reddit.com/"}).status_code == 409
+    assert client.post("/dominios", headers=h, json={"dominio": "localhost"}).status_code == 422
+
+    # apps: paquete Android válido y sin repetir
+    ok = {"nombre": "Instagram", "paquete": "com.instagram.android"}
+    assert client.post("/apps", headers=h, json=ok).status_code == 201
+    assert client.post("/apps", headers=h, json=ok).status_code == 409
+    assert client.post("/apps", headers=h, json={"nombre": "X", "paquete": "instagram"}).status_code == 422
+    assert client.post("/apps", headers=h, json={"nombre": "X", "paquete": "com.1x"}).status_code == 422
+    client.post("/apps", headers=h, json={"nombre": "X", "paquete": "com.twitter.android"})
+    assert client.put("/apps/2", headers=h, json={"paquete": "com.instagram.android"}).status_code == 409
+    assert client.put("/apps/2", headers=h, json={"paquete": "com.twitter.android"}).status_code == 200

@@ -8,6 +8,20 @@ class AppService(ServicioPorUsuario):
     campos_anulables = {"categoria"}
     repo: AppRepository
 
+    def _revisar_paquete(self, usuario_id: int, paquete: str, propia=None) -> None:
+        otra = self.repo.obtener_por_paquete(usuario_id, paquete)
+        if otra and otra is not propia:
+            raise Conflicto(f"Ya tienes registrada la app con paquete {paquete}")
+
+    def preparar_creacion(self, usuario_id: int, datos: dict) -> dict:
+        self._revisar_paquete(usuario_id, datos["paquete"])
+        return datos
+
+    def preparar_actualizacion(self, usuario_id: int, obj, cambios: dict) -> dict:
+        if "paquete" in cambios:
+            self._revisar_paquete(usuario_id, cambios["paquete"], obj)
+        return cambios
+
     def antes_de_eliminar(self, app) -> None:
         # Integridad referencial: no se borra una app que ya tiene historial.
         if self.repo.tiene_historial(app):
