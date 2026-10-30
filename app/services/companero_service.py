@@ -2,14 +2,12 @@
 Compañero IA (pieza 3): junta lo que decidieron la lógica difusa y la regresión
 logística y se lo da al LLM para que Foqui lo explique.
 """
-from datetime import timedelta
-
 from app.models._comun import ahora
 from app.repositories.ajuste_repository import AjusteRepository
 from app.repositories.evento_repository import EventoRepository
 from app.repositories.plan_repository import PlanRepository
 from app.repositories.sesion_repository import SesionRepository
-from app.services.plan_service import rango_semana
+from app.services.plan_service import limite_vigente, rango_semana
 from app.services.riesgo_service import RiesgoService
 from app.utils import llm
 from app.utils.companero import (
@@ -26,26 +24,17 @@ class CompaneroService:
         self.sesiones = SesionRepository(db)
         self.riesgo = RiesgoService(db)
 
-    def _sesion_activa(self, usuario_id: int) -> bool:
-        momento = ahora()
-        return any(
-            not s.completada and s.fin is None and s.inicio + timedelta(minutes=s.duracion_min) > momento
-            for s in self.sesiones.listar(usuario_id, completada=False)[-3:]
-        )
-
     def contexto(self, usuario) -> dict:
         """Datos agregados de la última semana con ajuste. Nada de apps ni horarios."""
         ctx = {"nombre": (usuario.seudonimo or usuario.nombre).split()[0],
-               "sesion_foco_activa": self._sesion_activa(usuario.id)}
+               "sesion_foco_activa": self.sesiones.activa(usuario.id, ahora()) is not None}
         plan = self.planes.activo(usuario.id)
         ajustes = self.ajustes.listar(plan) if plan else []
         if not ajustes:
             return ctx
         actual = ajustes[-1]
         _, segundos = self.eventos.resumen(usuario.id, *rango_semana(plan, actual.semana))
-        limite = plan.limite_base
-        for ajuste in ajustes:
-            limite *= 1 + ajuste.cambio_pct / 100
+        limite = limite_vigente(plan, ajustes)
         riesgo = self.riesgo.calcular(usuario.id)
         sube = [f for f in riesgo["factores"] if f["efecto"] == "sube"]
         ctx.update({

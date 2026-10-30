@@ -3474,7 +3474,50 @@
       ]
     },
     {
-      "name": "17 Limpieza (correr al final)",
+      "name": "17 Bloqueo de apps",
+      "description": "Reglas que el teléfono aplica a cada app: permitir, pausa (leve/media/alta) o bloquear.",
+      "item": [
+        {
+          "name": "GET /bloqueo/reglas",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.expect(pm.response.code).to.be.oneOf([200]));",
+                  "pm.test('Cada app trae su acción', () => { pm.response.json().apps.forEach(a => pm.expect(a.accion).to.be.oneOf(['permitir', 'pausa', 'bloquear'])); });",
+                  "pm.test('Dominios es una lista', () => pm.expect(pm.response.json().dominios).to.be.an('array'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/bloqueo/reglas?fecha=2026-10-19",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "bloqueo",
+                "reglas"
+              ],
+              "query": [
+                {
+                  "key": "fecha",
+                  "value": "2026-10-19",
+                  "description": "Día local del teléfono"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "18 Limpieza (correr al final)",
       "description": "Borra el plan y desactiva la cuenta de prueba. Después de esto el usuario ya no puede usar la API (401).",
       "item": [
         {

@@ -417,3 +417,43 @@ def test_companero_con_llm(client, monkeypatch):
     assert recibido["mensajes"][-1]["content"] == "¿Por qué bajó mi límite?"
     assert "DATOS_DEL_USUARIO" in recibido["sistema"]
     assert client.post("/companero/mensaje", headers=h, json={"historial": [{"rol": "x", "texto": "a"}]}).status_code == 422
+
+
+def test_reglas_de_bloqueo(client):
+    h = registrar(client, "bloqueo@focus.app")
+    client.post("/apps", headers=h, json={"nombre": "TikTok", "paquete": "com.zhiliaoapp.musically", "limite_aperturas": 2})
+    client.post("/apps", headers=h, json={"nombre": "Reloj", "paquete": "com.android.deskclock", "limite_aperturas": 0})
+    for hora in ("08", "09"):
+        client.post("/eventos", headers=h, json={"app_numero": 1, "inicio": f"2026-10-19T{hora}:00:00", "fin": f"2026-10-19T{hora}:10:00"})
+    client.post("/dominios", headers=h, json={"dominio": "tiktok.com"})
+    client.post("/dominios", headers=h, json={"dominio": "x.com"})
+    client.put("/dominios/2", headers=h, json={"activo": False})
+
+    # sin plan: no hay límite diario, solo pausas por aperturas de más
+    r = client.get("/bloqueo/reglas", headers=h, params={"fecha": "2026-10-19"})
+    assert r.status_code == 200, r.text
+    s = r.json()
+    assert s["limite_hoy_min"] is None and s["restante_min"] is None and s["usado_hoy_min"] == 20.0
+    assert s["dominios"] == ["tiktok.com"] and s["sesion_foco_activa"] is False
+    tiktok, reloj = s["apps"]
+    assert tiktok["aperturas_hoy"] == 2 and tiktok["accion"] == "pausa" and tiktok["nivel"] == "leve"
+    assert reloj["aperturas_hoy"] == 0 and reloj["duracion_seg"] == 5
+
+    # con plan de 20 min el límite de ese día ya se agotó -> todo se bloquea
+    client.post("/planes", headers=h, json={"fecha_inicio": "2026-10-19", "limite_base": 20})
+    s = client.get("/bloqueo/reglas", headers=h, params={"fecha": "2026-10-19"}).json()
+    assert s["limite_hoy_min"] == 20.0 and s["restante_min"] == 0.0 and s["limite_excedido"] is True
+    assert {a["accion"] for a in s["apps"]} == {"bloquear"}
+
+    # otro día empieza de cero
+    s = client.get("/bloqueo/reglas", headers=h, params={"fecha": "2026-10-20"}).json()
+    assert s["usado_hoy_min"] == 0.0 and s["apps"][0]["accion"] == "permitir"
+
+    # una sesión de foco activa bloquea todo hasta que termina o se completa
+    client.post("/sesiones-foco", headers=h, json={"duracion_min": 25})
+    s = client.get("/bloqueo/reglas", headers=h, params={"fecha": "2026-10-20"}).json()
+    assert s["sesion_foco_activa"] is True and s["sesion_foco_hasta"] is not None
+    assert {a["accion"] for a in s["apps"]} == {"bloquear"}
+    client.put("/sesiones-foco/1", headers=h, json={"completada": True})
+    assert client.get("/bloqueo/reglas", headers=h, params={"fecha": "2026-10-20"}).json()["sesion_foco_activa"] is False
+    assert client.get("/bloqueo/reglas").status_code == 422

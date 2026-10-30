@@ -14,6 +14,14 @@ def rango_semana(plan, semana: int) -> tuple[datetime, datetime]:
     return desde, desde + timedelta(weeks=1)
 
 
+def limite_vigente(plan, ajustes) -> float:
+    """Minutos diarios: el límite base con todos los ajustes semanales aplicados en orden."""
+    limite = plan.limite_base
+    for ajuste in ajustes:
+        limite *= 1 + ajuste.cambio_pct / 100
+    return limite
+
+
 class PlanService(ServicioPorUsuario):
     no_encontrado = "No existe el plan {numero} para este usuario"
     repo: PlanRepository
