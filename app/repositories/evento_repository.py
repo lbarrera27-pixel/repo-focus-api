@@ -31,3 +31,10 @@ class EventoRepository(RepositorioPorUsuario[EventoUso]):
             consulta = consulta.filter(EventoUso.inicio < hasta)
         total, segundos = consulta.one()
         return int(total), int(segundos)
+
+    def aperturas_por_app(self, usuario_id: int, desde: datetime, hasta: datetime) -> dict[int, int]:
+        """{app_id: eventos que iniciaron en [desde, hasta)}. Cada evento es una apertura."""
+        filas = self.db.query(EventoUso.app_id, func.count(EventoUso.id)) \
+            .filter(EventoUso.usuario_id == usuario_id, EventoUso.inicio >= desde, EventoUso.inicio < hasta) \
+            .group_by(EventoUso.app_id).all()
+        return {app_id: int(total) for app_id, total in filas}

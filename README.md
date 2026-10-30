@@ -125,7 +125,7 @@ Al acabar la materia, `04_borrar_todo.ps1` elimina todo para no gastar créditos
    a cada petición (script a nivel colección). Incluye casos de error (401, 404, 409, 422).
 4. Para la foto con Blob Storage: en *POST /usuarios/me/foto/archivo* → Body → form-data → elige una imagen.
 
-## Rutas (58 operaciones)
+## Rutas (59 operaciones)
 
 | Método | Ruta | Tabla / módulo |
 |---|---|---|
@@ -156,6 +156,7 @@ Al acabar la materia, `04_borrar_todo.ps1` elimina todo para no gastar créditos
 | POST / GET | `/tokens-dispositivo` | TOKEN_DISPOSITIVO |
 | GET / PUT / DELETE | `/tokens-dispositivo/{numero}` | TOKEN_DISPOSITIVO |
 | GET | `/estadisticas?desde=&hasta=` | Indicadores del usuario |
+| GET | `/bloqueo/reglas?fecha=` | Bloqueo: qué hacer con cada app y qué dominios bloquear |
 | GET | `/riesgo` | **IA:** riesgo de recaída (regresión logística) |
 | POST | `/companero/mensaje` | **IA:** Compañero Foqui (LLM que explica el plan y el riesgo) |
 | POST / GET | `/api/ajuste-semanal` | **Azure Function** (serverless) |
@@ -169,6 +170,26 @@ Al acabar la materia, `04_borrar_todo.ps1` elimina todo para no gastar créditos
 - **Ajuste semanal:** si no se envía `cambio_pct`, lo calcula un controlador difuso Mamdani con la
   adherencia y las pausas ignoradas de esa semana (`app/utils/reglas_plan.py`). La Azure Function usa las mismas reglas.
 - **Sesión de foco:** al marcarla `completada`, se registra la hora de fin.
+
+## Bloqueo de apps
+
+La API **no bloquea**: el bloqueo ocurre en el teléfono (Android detecta la app abierta y muestra la
+pausa o la pantalla de bloqueo encima). `GET /bloqueo/reglas` le dice qué hacer en la **siguiente**
+apertura de cada app, con los datos de ese día (`fecha` = día local del teléfono):
+
+| Situación | `accion` | `nivel` / `duracion_seg` |
+|---|---|---|
+| Sesión de foco activa o límite diario del plan agotado | `bloquear` | — |
+| Aún no llega a su `limite_aperturas` | `permitir` | — |
+| 1–2 aperturas de más | `pausa` | `leve` / 5 s |
+| 3–4 aperturas de más | `pausa` | `media` / 15 s |
+| 5 o más aperturas de más | `pausa` | `alta` / 30 s |
+
+- Cada `EventoUso` del día cuenta como una apertura; el límite de hoy es `limite_base` con todos los
+  ajustes semanales aplicados (el mismo que explica Foqui).
+- También regresa los `dominios` activos (para filtrarlos con un `VpnService` local) y `restante_min`.
+- El teléfono **guarda las reglas y decide sin conexión**; las vuelve a pedir al reportar eventos o pausas.
+  Las reglas están en `app/utils/reglas_bloqueo.py` (Python puro) para copiarlas tal cual en Kotlin.
 
 ## IA: riesgo de recaída
 

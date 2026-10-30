@@ -2999,6 +2999,49 @@
           }
         }
       ]
+    },
+    {
+      "name": "15 Bloqueo de apps",
+      "description": "Reglas que el teléfono aplica a cada app: permitir, pausa (leve/media/alta) o bloquear.",
+      "item": [
+        {
+          "name": "GET /bloqueo/reglas",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.expect(pm.response.code).to.be.oneOf([200]));",
+                  "pm.test('Cada app trae su acción', () => { pm.response.json().apps.forEach(a => pm.expect(a.accion).to.be.oneOf(['permitir', 'pausa', 'bloquear'])); });",
+                  "pm.test('Dominios es una lista', () => pm.expect(pm.response.json().dominios).to.be.an('array'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/bloqueo/reglas?fecha=2026-10-19",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "bloqueo",
+                "reglas"
+              ],
+              "query": [
+                {
+                  "key": "fecha",
+                  "value": "2026-10-19",
+                  "description": "Día local del teléfono"
+                }
+              ]
+            }
+          }
+        }
+      ]
     }
   ]
 }
