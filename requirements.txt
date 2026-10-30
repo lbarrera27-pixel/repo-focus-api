@@ -9,3 +9,5 @@ bcrypt>=4.1
 pyodbc>=5.1
 azure-storage-blob>=12.20
 anthropic>=2.0
+scikit-learn>=1.5
+numpy>=1.26

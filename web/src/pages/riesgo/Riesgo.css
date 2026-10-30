@@ -1,0 +1,92 @@
+/* Riesgo de recaída (Figma e13–e15) */
+
+.rg-nivel {
+  display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px; border-radius: 10px;
+  font-size: 11px; line-height: 15px; font-weight: 700;
+}
+.rg-nivel--medio { background: var(--w-marca-suave); color: var(--w-acento-fuerte); }
+.rg-nivel--bajo { background: var(--w-exito-suave); color: var(--w-exito); }
+.rg-nivel--alto { background: var(--w-peligro-suave); color: var(--w-peligro); }
+
+.rg-cuerpo { flex: 1; align-items: stretch; }
+.rg-tarjeta { display: flex; flex-direction: column; gap: 12px; padding: 20px; }
+
+/* Gráfica de línea (520 × 230 en el diseño) */
+.rg-grafica { margin: 0; display: flex; flex-direction: column; gap: 12px; }
+.rg-grafica__area { position: relative; height: 230px; }
+.rg-grafica__area svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.rg-zona--alta { fill: var(--w-peligro-suave); }
+.rg-zona--media { fill: var(--w-marca-sutil); }
+.rg-zona--baja { fill: var(--w-exito-suave); }
+.rg-umbral { stroke: var(--w-linea); stroke-width: 1; vector-effect: non-scaling-stroke; }
+.rg-serie { fill: none; stroke: var(--w-texto); stroke-width: 2; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
+.rg-grafica__etiqueta {
+  position: absolute; left: 8px;
+  font-size: 11px; line-height: 15px; font-weight: 700; color: var(--w-texto-fuerte);
+}
+.rg-punto {
+  position: absolute; width: 10px; height: 10px; margin: -5px 0 0 -5px;
+  border-radius: 50%; background: var(--w-superficie); border: 2px solid var(--w-texto);
+}
+.rg-grafica__eje {
+  display: flex; justify-content: space-between; padding: 0 14px;
+  font-size: 11px; line-height: 15px; font-weight: 600; color: var(--w-texto-2);
+}
+.rg-grafica__eje--uno { justify-content: center; }
+
+.rg-semanas { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.rg-semanas li {
+  display: flex; flex-direction: column; gap: 2px; padding: 8px 10px; border-radius: 10px;
+  background: var(--w-apagado); border: 1px solid transparent;
+}
+.rg-semanas .rg-semanas__actual { background: var(--w-marca-sutil); border-color: var(--w-borde-marca); }
+.rg-semanas__actual .w-etiqueta, .rg-semanas__actual b { color: var(--w-acento); }
+
+/* Contribución de cada factor */
+.rg-factores { display: flex; flex-direction: column; gap: 12px; }
+.rg-factores li { display: flex; align-items: center; gap: 10px; }
+.rg-factores__nombre { width: 190px; display: flex; flex-direction: column; gap: 1px; font-size: 11px; line-height: 15px; }
+.rg-factores__nombre b { color: var(--w-texto); }
+.rg-factores__nombre span { color: var(--w-texto-2); }
+.rg-divergente { position: relative; width: 220px; height: 14px; flex-shrink: 0; }
+.rg-divergente__centro { position: absolute; left: 110px; top: 0; width: 1px; height: 14px; background: var(--w-borde-input); }
+.rg-divergente__barra { position: absolute; top: 2px; height: 10px; border-radius: 3px; }
+.rg-divergente__barra--baja { background: var(--w-exito); }
+.rg-divergente__barra--sube { background: var(--w-peligro); }
+.rg-direccion { display: inline-flex; align-items: center; gap: 3px; margin-left: auto; padding-right: 30px; font-size: 11px; line-height: 15px; font-weight: 700; }
+.rg-direccion--baja { color: var(--w-exito); }
+.rg-direccion--sube { color: var(--w-peligro); }
+
+.rg-consejo { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 12px; background: var(--w-apagado); }
+.rg-consejo__icono { display: flex; padding: 6px; border-radius: 10px; background: var(--w-marca-sutil); }
+.rg-consejo__texto { display: flex; flex-direction: column; gap: 2px; }
+
+.rg-ficha {
+  display: flex; align-items: center; gap: 10px; padding: 14px; border-radius: 18px;
+  background: var(--w-apagado); font-size: 11px; line-height: 15px; color: var(--w-texto-fuerte);
+}
+
+/* e14 · Sin datos */
+.rg-tarjeta--vacia { align-items: center; justify-content: center; padding: 24px; }
+.rg-avance { width: 100%; gap: 10px; }
+.rg-avance > div { display: flex; flex-direction: column; gap: 6px; padding: 12px 14px; border-radius: 12px; background: var(--w-apagado); }
+.rg-medir { flex: 0 0 440px; gap: 16px; padding: 24px; }
+.rg-medir:focus-visible { outline: 2px solid var(--w-marca); outline-offset: 2px; }
+.rg-medir > div:first-child { display: flex; flex-direction: column; gap: 4px; }
+.rg-medir__lista { display: flex; flex-direction: column; gap: 16px; }
+.rg-medir__lista li { display: flex; align-items: center; gap: 10px; }
+.rg-medir__lista .w-cuerpo { flex: 1; }
+.rg-medir__icono { display: flex; padding: 3px; border-radius: 10px; background: var(--w-apagado); }
+.rg-medir__icono--ok { background: var(--w-exito-suave); }
+.rg-medir__estado { font-size: 11px; line-height: 15px; font-weight: 600; color: var(--w-texto-3); white-space: nowrap; }
+.rg-medir__estado--ok { color: var(--w-exito); }
+.rg-porque { display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-radius: 12px; background: var(--w-info-suave); }
+.rg-porque > span { display: flex; flex-direction: column; gap: 2px; }
+
+/* e15 · Cargando */
+.rg-tarjeta--cargando { gap: 16px; padding: 24px; }
+.rg-zonas-cargando { flex: 1; display: flex; flex-direction: column; gap: 4px; }
+.rg-eje-cargando { display: flex; gap: 16px; }
+.rg-eje-cargando > * { flex: 1; }
+.rg-factor-cargando { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.rg-factor-cargando > span { display: flex; flex-direction: column; gap: 6px; }

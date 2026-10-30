@@ -1,0 +1,70 @@
+/* Estilos base del portal nuevo: tipografía FOCUS/* y componentes Web/* del Figma */
+
+.w-pagina {
+  flex: 1; min-height: calc(100vh / var(--zoom, 1));
+  display: flex; flex-direction: column; gap: 20px;
+  padding: 28px 32px 32px;
+  background: var(--w-fondo);
+  font-family: 'Inter', system-ui, sans-serif; color: var(--w-texto);
+}
+
+/* Tipografía */
+.w-display { font-size: 28px; line-height: 34px; font-weight: 700; letter-spacing: -0.8px; color: var(--w-texto); }
+.w-titulo-2 { font-size: 20px; line-height: 25px; font-weight: 700; letter-spacing: -0.4px; }
+.w-titulo-3 { font-size: 16px; line-height: 21px; font-weight: 700; letter-spacing: -0.2px; color: var(--w-texto); }
+.w-sobretitulo { font-size: 11px; line-height: 14px; font-weight: 800; letter-spacing: 0.9px; color: var(--w-acento); }
+.w-etiqueta { font-size: 11px; line-height: 14px; font-weight: 800; letter-spacing: 0.9px; color: var(--w-texto-2); }
+.w-cuerpo { font-size: 13px; line-height: 18px; }
+.w-texto { font-size: 11px; line-height: 15px; }
+.w-texto--2 { color: var(--w-texto-2); }
+.w-texto--3 { color: var(--w-texto-3); }
+
+/* Encabezado de página */
+.w-encabezado { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.w-encabezado__titulos { display: flex; flex-direction: column; gap: 4px; }
+.w-encabezado__acciones { display: flex; align-items: center; gap: 10px; }
+
+/* Tarjetas */
+.w-tarjeta { background: var(--w-superficie); border: 1px solid var(--w-borde); border-radius: 18px; }
+.w-fila { display: flex; gap: 16px; }
+.w-fila > * { flex: 1 1 0; min-width: 0; }
+
+/* Web/KPI */
+.w-kpi { display: flex; flex-direction: column; gap: 4px; padding: 20px; white-space: nowrap; }
+.w-kpi--cargando { gap: 10px; padding: 18px 24px; }
+
+/* Web/Esqueleto */
+.w-esqueleto { display: block; flex-shrink: 0; border-radius: 7px; background: var(--w-hundido); animation: w-pulso 1.4s ease-in-out infinite; }
+@keyframes w-pulso { 50% { opacity: 0.55; } }
+@media (prefers-reduced-motion: reduce) { .w-esqueleto { animation: none; } }
+
+/* Web/Banner */
+.w-banner { display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-radius: 14px; }
+.w-banner--info { background: var(--w-info-suave); }
+.w-banner--error { background: var(--w-peligro-suave); }
+.w-banner__texto { flex: 1; display: flex; flex-direction: column; gap: 2px; font-size: 13px; line-height: 18px; }
+.w-banner__texto b { color: var(--w-texto); }
+.w-banner__texto span { color: var(--w-texto-2); }
+
+/* Web/Estado vacío */
+.w-vacio { display: flex; flex-direction: column; align-items: center; gap: 12px; width: 440px; max-width: 100%; padding: 40px 32px; text-align: center; }
+.w-vacio__burbuja { display: flex; padding: 16px; border-radius: 28px; background: var(--w-marca-sutil); }
+.w-vacio .w-cuerpo { max-width: 360px; }
+
+/* Button */
+.w-boton {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 15px 16px; border-radius: 15px; border: 1px solid transparent;
+  font-size: 13px; line-height: 18px; font-weight: 700; color: var(--w-texto);
+}
+.w-boton:focus-visible { outline: 2px solid var(--w-marca); outline-offset: 2px; }
+.w-boton--primario { background: var(--w-marca); box-shadow: 0 6px 8px rgba(245, 158, 10, 0.3); }
+.w-boton--primario:hover { filter: brightness(1.05); }
+.w-boton--secundario { background: var(--w-superficie); border-color: var(--w-borde-input); }
+.w-boton--secundario:hover { background: var(--w-apagado); }
+
+/* Barra de progreso (color/data/*) */
+.w-barra { display: block; width: 100%; height: 8px; border-radius: 4px; background: #e2e8f0; overflow: hidden; }
+.w-barra > span { display: block; height: 100%; border-radius: 4px; background: var(--w-acento); }
+
+.w-divisor { height: 1px; width: 100%; background: var(--w-borde); }

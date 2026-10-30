@@ -13,6 +13,7 @@ import logging
 import os
 import uuid
 from datetime import datetime, timedelta, timezone
+from urllib.parse import unquote, urlparse
 
 from app.config import AZURE_STORAGE_CONNECTION_STRING, AZURE_STORAGE_CONTAINER
 
@@ -57,3 +58,28 @@ def subir_foto(usuario_id: int, contenido: bytes, content_type: str) -> str:
         expiry=datetime.now(timezone.utc) + timedelta(days=365),
     )
     return f"{blob.url}?{sas}"
+
+
+def borrar_foto(url: str) -> bool:
+    """Borra el blob si la URL es de nuestro contenedor. True si lo borró.
+
+    No lanza errores: si el blob ya no existe o la URL es externa (POST /usuarios/me/foto),
+    basta con quitar la URL del perfil.
+    """
+    if not AZURE_STORAGE_CONNECTION_STRING:
+        return False
+    ruta = unquote(urlparse(url).path).lstrip("/")
+    prefijo = f"{AZURE_STORAGE_CONTAINER}/"
+    if not ruta.startswith(prefijo):
+        return False
+    try:
+        from azure.storage.blob import BlobServiceClient
+
+        servicio = BlobServiceClient.from_connection_string(AZURE_STORAGE_CONNECTION_STRING)
+        if urlparse(url).hostname != urlparse(servicio.url).hostname:
+            return False
+        servicio.get_blob_client(AZURE_STORAGE_CONTAINER, ruta[len(prefijo):]).delete_blob()
+        return True
+    except Exception as e:  # noqa: BLE001  (el perfil se limpia aunque el blob falle)
+        logging.getLogger("focus.api").warning("No se pudo borrar la foto %s: %s", ruta, e)
+        return False

@@ -1,0 +1,12 @@
+<svg preserveAspectRatio="none" overflow="visible" style="display: block;" width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="icon/alert-triangle" clip-path="url(#clip0_0_236)">
+<path id="Vector" d="M6.00833 2.275L1.05 10.5C0.948359 10.676 0.894453 10.8755 0.89362 11.0787C0.892787 11.2819 0.945057 11.4818 1.04525 11.6587C1.14545 11.8355 1.29009 11.9831 1.46486 12.0868C1.63963 12.1905 1.83846 12.2468 2.04167 12.25H11.9583C12.1615 12.2468 12.3604 12.1905 12.5351 12.0868C12.7099 11.9831 12.8546 11.8355 12.9547 11.6587C13.0549 11.4818 13.1072 11.2819 13.1064 11.0787C13.1055 10.8755 13.0516 10.676 12.95 10.5L7.99167 2.275C7.88704 2.10617 7.74104 1.96685 7.56749 1.87024C7.39395 1.77362 7.19862 1.72291 7 1.72291C6.80138 1.72291 6.60604 1.77362 6.4325 1.87024C6.25896 1.96685 6.11296 2.10617 6.00833 2.275Z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" stroke="#92400E"/>
+<path id="Vector_2" d="M7 5.25V7.58333" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" stroke="#92400E"/>
+<path id="Vector_3" d="M7 9.91667H7.00583" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" stroke="#92400E"/>
+</g>
+<defs>
+<clipPath id="clip0_0_236">
+<rect width="14" height="14" fill="white"/>
+</clipPath>
+</defs>
+</svg>

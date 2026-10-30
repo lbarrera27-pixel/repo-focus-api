@@ -10,3 +10,6 @@ class AppRepository(RepositorioPorUsuario[App]):
         eventos = self.db.query(EventoUso.id).filter(EventoUso.app_id == app.id).first()
         pausas = self.db.query(Pausa.id).filter(Pausa.app_id == app.id).first()
         return bool(eventos or pausas)
+
+    def obtener_por_paquete(self, usuario_id: int, paquete: str) -> App | None:
+        return self._consulta(usuario_id).filter(App.paquete == paquete).first()

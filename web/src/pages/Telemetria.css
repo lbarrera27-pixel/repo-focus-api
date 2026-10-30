@@ -1,0 +1,149 @@
+/* Telemetría Cloud — pantalla "1 - Pagina web" del diseño de Figma */
+
+.tel { display: flex; flex-direction: column; gap: 13px; padding: 14px 18px 18px; }
+.tel .card { box-shadow: none; filter: drop-shadow(0 3px 6px rgba(15, 23, 42, 0.04)); }
+/* Estado del dispositivo */
+.tel-dispositivo__fila {
+  display: grid; grid-template-columns: 263.88fr 141.38fr 169.65fr 216.76fr 292.18fr;
+  gap: 9px; padding: 0 16px 14px;
+}
+.tel-dispositivo__fila > * {
+  height: 125px; min-width: 0; border: 1.127px solid var(--borde-suave); border-radius: 12px; background: var(--fondo-suave);
+}
+.tel-principal { display: flex; align-items: center; gap: 12px; padding: 12px; }
+.tel-principal__telefono {
+  position: relative; display: grid; place-items: center; width: 48px; height: 64px; flex-shrink: 0;
+  border: 1.127px solid #dbe3ec; border-radius: 11px; background: #fff; filter: drop-shadow(0 5px 7px rgba(15, 23, 42, 0.07));
+}
+.tel-principal__led {
+  position: absolute; left: 38.7px; top: 46.8px; width: 10px; height: 10px; border-radius: 5px;
+  background: var(--verde); border: 1.127px solid #fff;
+}
+.tel-principal__led--off { background: var(--texto-oscuro-2); }
+.tel-principal__texto { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.tel-principal__texto h3 { margin: 0; font: 400 14px/21px var(--display); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tel-principal__texto p { font-size: 6px; line-height: 9px; color: var(--texto-3); }
+.tel-principal__conexion { display: flex; align-items: center; gap: 4px; padding-top: 5px; font-size: 6px; line-height: 9px; font-weight: 600; color: var(--verde-texto); }
+.tel-principal__conexion i { width: 5px; height: 5px; border-radius: 2.5px; background: var(--verde); }
+.tel-principal__conexion--off { color: var(--texto-3); }
+.tel-principal__conexion--off i { background: var(--texto-oscuro-2); }
+
+.tel-metrica { display: flex; flex-direction: column; gap: 10px; padding: 12px; }
+.tel-metrica__icono { display: grid; place-items: center; width: 30px; height: 30px; flex-shrink: 0; border-radius: 9px; background: #fef3c7; }
+.tel-metrica__icono--chico { width: 29px; height: 29px; border-radius: 8px; }
+.tel-metrica__cuerpo { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+.tel-metrica__valor { font: 700 13px/19.5px var(--display); }
+.tel-metrica__nota { display: flex; align-items: center; gap: 3px; font-size: 6px; line-height: 9px; color: var(--texto-3); }
+.tel-barra { display: block; width: 100%; max-width: 115px; height: 5px; border-radius: 5px; background: var(--borde); overflow: hidden; }
+.tel-barra span { display: block; height: 100%; border-radius: 5px; transition: width 0.3s; }
+.tel-codigo {
+  display: block; padding: 5px 6px; border: 1.127px solid var(--borde); border-radius: 6px; background: #fff;
+  font: 6px/9px var(--mono); color: #334155; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.tel-etiqueta {
+  align-self: flex-start; padding: 4px 6px; border-radius: 6px; background: #dcfce7;
+  font-size: 6px; line-height: 9px; font-weight: 700; color: var(--verde-texto);
+}
+.tel-etiqueta--error { background: #fef2f2; color: #b91c1c; }
+.tel-permisos { padding: 10px 12px; }
+.tel-permisos__cabeza { display: flex; align-items: center; gap: 8px; }
+.tel-permisos__cabeza > span:last-child { display: flex; flex-direction: column; gap: 2px; }
+.tel-permisos__cabeza b { font-size: 8px; line-height: 12px; }
+.tel-permisos ul { display: flex; flex-direction: column; gap: 5px; padding-top: 8px; }
+.tel-permisos li { display: grid; grid-template-columns: 14px 1fr auto; align-items: center; font-size: 6px; line-height: 9px; color: var(--texto-2); }
+.tel-permisos em {
+  padding: 3px 5px; border-radius: 5px; background: #dcfce7;
+  font-size: 5px; line-height: 7.5px; font-style: normal; font-weight: 700; color: var(--verde-texto);
+}
+.tel-permisos em.off { background: var(--fondo); color: var(--texto-3); }
+.tel-permisos .vacio-li { display: block; color: var(--texto-3); }
+
+/* Pipeline */
+.tel-pipeline .card__header--tel { padding: 13px 16px 8px; }
+.tel-kpis { display: flex; align-items: center; gap: 18px; }
+.tel-kpis > div { display: flex; flex-direction: column; align-items: flex-end; gap: 3px; }
+.tel-kpis > i { width: 1px; height: 27px; background: var(--borde); }
+.tel-kpis .micro { letter-spacing: 0.35px; }
+.tel-kpis b { font: 700 15px/22.5px var(--display); }
+.tel-kpis b span { font: 700 7px/10.5px var(--texto-fuente); color: var(--texto-3); }
+.tel-flujo {
+  display: grid; grid-template-columns: 224.89fr 302.87fr 289.87fr 279.9fr;
+  height: 58px; margin: 0 16px; padding: 7px 10px; align-items: center;
+  border: 1.127px solid var(--borde-suave); border-radius: 11px; background: var(--fondo-suave);
+}
+.tel-flujo__paso { display: flex; align-items: center; gap: 7px; min-width: 0; }
+.tel-flujo__arista { position: relative; display: flex; align-items: center; flex: 0 1 78px; margin-right: 3px; }
+.tel-flujo__arista small {
+  position: absolute; left: 45%; top: -7px; transform: translateX(-50%);
+  font-size: 4px; line-height: 6px; color: var(--texto-3); white-space: nowrap;
+}
+.tel-flujo__linea { flex: 1; height: 1px; background: var(--ambar); }
+.tel-flujo__texto { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.tel-flujo__texto b { font-size: 7px; line-height: 10.5px; }
+.tel-flujo__texto small { font-size: 5px; line-height: 7.5px; color: var(--texto-3); white-space: nowrap; }
+
+.terminal {
+  height: 274px; margin: 10px 16px 14px; overflow: hidden;
+  border: 1.127px solid #1e293b; border-radius: 11px; background: #0b1220;
+}
+.terminal__barra {
+  display: flex; justify-content: space-between; align-items: center; height: 34px; padding: 0 12px;
+  background: #111c2e; border-bottom: 1.127px solid #1e293b;
+}
+.terminal__luces { display: flex; align-items: center; gap: 5px; }
+.terminal__luces i { width: 7px; height: 7px; border-radius: 3.5px; }
+.terminal__luces code { padding-left: 5px; font: 6px/9px var(--mono); color: var(--texto-oscuro-2); }
+.terminal__vivo { display: flex; align-items: center; gap: 5px; font-size: 5px; line-height: 7.5px; font-weight: 700; letter-spacing: 0.5px; color: var(--verde); }
+.terminal__vivo i { width: 5px; height: 5px; border-radius: 2.5px; background: var(--verde); }
+.terminal__vivo--off { color: var(--texto-oscuro-2); }
+.terminal__vivo--off i { background: var(--texto-oscuro-2); }
+.terminal__tabla { width: 100%; border-collapse: collapse; table-layout: fixed; }
+.terminal__tabla th:nth-child(1) { width: 163px; }
+.terminal__tabla th:nth-child(2) { width: 199px; }
+.terminal__tabla th:nth-child(4) { width: 123px; }
+.terminal__tabla th:nth-child(5) { width: 116px; }
+.terminal__tabla th:nth-child(6) { width: 186px; }
+.terminal__tabla th {
+  height: 29px; padding: 0 5px; background: #0e1829; text-align: left;
+  font-size: 5px; line-height: 7.5px; font-weight: 700; letter-spacing: 0.4px; color: var(--texto-oscuro-2);
+}
+.terminal__tabla th:first-child, .terminal__tabla td:first-child { padding-left: 12px; }
+.terminal__tabla td {
+  height: 34px; padding: 0 5px; border-top: 1.127px solid rgba(51, 65, 85, 0.45);
+  font-size: 6px; line-height: 9px; color: #cbd5e1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.terminal__tabla code { font: 6px/9px var(--mono); color: var(--texto-oscuro-2); }
+.terminal__tabla td.terminal__vacio { text-align: center; color: var(--texto-oscuro-2); }
+.tipo { display: inline-block; padding: 3px 5px; border-radius: 5px; font: 700 5px/7.5px var(--mono); }
+.tipo--app { background: rgba(245, 158, 11, 0.12); color: #fbbf24; }
+.tipo--friccion { background: rgba(244, 63, 94, 0.12); color: #fb7185; }
+.tipo--unlock { background: rgba(59, 130, 246, 0.12); color: #60a5fa; }
+.ack { display: inline-flex; align-items: center; gap: 3px; color: #34d399; }
+.ack i { width: 5px; height: 5px; border-radius: 2.5px; background: var(--verde); }
+
+/* Política de sincronización */
+.tel-red {
+  display: grid; grid-template-columns: 228.24fr 219.45fr 184.34fr 254.58fr 161.23fr; align-items: center;
+  gap: 18px; height: 152px; padding: 14px 16px;
+}
+.tel-red__titulo { display: flex; flex-direction: column; gap: 4px; }
+.tel-red__desc { font-size: 6px; line-height: 9px; color: var(--texto-3); }
+.tel-red__opcion { display: grid; grid-template-columns: 32px 1fr 34px; align-items: center; gap: 8px; }
+.tel-red__opcion > span:nth-child(2) { display: flex; flex-direction: column; gap: 3px; }
+.tel-red__opcion b { font-size: 7px; line-height: 10.5px; }
+.tel-red__opcion small { font-size: 5px; line-height: 7.5px; color: var(--texto-3); }
+.tel-red__icono { display: grid; place-items: center; width: 32px; height: 32px; border-radius: 9px; background: #d1fae5; }
+.switch { width: 34px; height: 20px; padding: 3px; border: 0; border-radius: 12px; background: #cbd5e1; transition: background 0.15s; }
+.switch span { display: block; width: 14px; height: 14px; border-radius: 7px; background: #fff; transition: transform 0.15s; }
+.switch--on { background: var(--verde); }
+.switch--on span { transform: translateX(14px); }
+.switch:focus-visible { outline: 2px solid var(--ambar); outline-offset: 2px; }
+.tel-red__intervalo { display: flex; flex-direction: column; gap: 3px; }
+.tel-red__intervalo b { margin-bottom: 4px; font-size: 7px; line-height: 10.5px; }
+.segmentado--chico { align-self: flex-start; height: auto; border-radius: 8px; }
+.segmentado--chico .segmentado__opcion { height: 25px; padding: 0 10px; border-radius: 6px; font-size: 6px; line-height: 9px; }
+.tel-red__datos { display: grid; grid-template-columns: 61fr 61fr 113fr; gap: 10px; }
+.tel-red__datos > div { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.tel-red__datos dt { font-size: 5px; line-height: 7.5px; font-weight: 700; letter-spacing: 0.3px; color: var(--texto-3); }
+.tel-red__datos dd { font-size: 7px; line-height: 10.5px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tel-red__boton { height: 39px; padding: 0 14px; justify-content: flex-start; }

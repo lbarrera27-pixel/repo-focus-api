@@ -1,0 +1,10 @@
+<svg preserveAspectRatio="none" overflow="visible" style="display: block;" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="Gamepad">
+<rect id="Rectangle 3966" x="13" y="14" width="2" height="2" rx="1" fill="#B91C1C" stroke="#B91C1C" stroke-width="0.5"/>
+<rect id="Rectangle 3970" x="7" y="11" width="2" height="6" rx="1" fill="#B91C1C" stroke="#B91C1C" stroke-width="0.5"/>
+<rect id="Rectangle 3971" x="11" y="13" width="2" height="6" rx="1" transform="rotate(90 11 13)" fill="#B91C1C" stroke="#B91C1C" stroke-width="0.5"/>
+<rect id="Rectangle 3968" x="16" y="12" width="2" height="2" rx="1" fill="#B91C1C" stroke="#B91C1C" stroke-width="0.5"/>
+<path id="Vector 176" d="M10 2V2.93845C10 3.41382 10 3.65151 10.0449 3.85979C10.1737 4.45731 10.5686 4.96315 11.1171 5.233C11.3082 5.32706 11.5388 5.3847 12 5.5L12 5.5L12.0597 5.51493L12.0597 5.51493C12.464 5.616 12.6662 5.66654 12.8358 5.74455C13.4245 6.01534 13.8455 6.5546 13.9655 7.19144C14 7.37488 14 7.58326 14 8" stroke-width="2" stroke-linecap="round" stroke="#B91C1C"/>
+<path id="Rectangle 3967" d="M8.5 20H15.5C17.8456 20 19.0184 20 19.8263 19.3237C20.0343 19.1496 20.2205 18.9465 20.3801 18.7196C21 17.8382 21 16.5588 21 14C21 11.4412 21 10.1618 20.3801 9.28042C20.2205 9.05351 20.0343 8.85041 19.8263 8.6763C19.0184 8 17.8456 8 15.5 8H8.5C6.15442 8 4.98164 8 4.17372 8.6763C3.96572 8.85041 3.77954 9.05351 3.61994 9.28042C3 10.1618 3 11.4412 3 14C3 16.5588 3 17.8382 3.61994 18.7196C3.77954 18.9465 3.96572 19.1496 4.17372 19.3237C4.98164 20 6.15442 20 8.5 20Z" stroke-width="2" stroke="#B91C1C"/>
+</g>
+</svg>

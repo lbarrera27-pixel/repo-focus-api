@@ -12,9 +12,11 @@ from app.repositories.plan_repository import PlanRepository
 from app.repositories.sesion_repository import SesionRepository
 from app.services.plan_service import rango_semana
 from app.utils.errores import NoEncontrado
-from app.utils.riesgo import UMBRAL_CUMPLE, predecir
+from app.models._comun import ahora
+from app.utils.riesgo import UMBRAL_ALTO, UMBRAL_CUMPLE, cargar_modelo, predecir, recomendar
 
 HORA_NOCHE, HORA_MANANA = 22, 6   # uso nocturno: de 22:00 a 05:59
+SEMANAS_HISTORIAL = 8
 
 
 def _proporcion(parte: float, total: float) -> float:
@@ -57,7 +59,21 @@ class RiesgoService:
         if plan is None:
             raise NoEncontrado("El usuario no tiene un plan activo")
         ajustes = self.ajustes.listar(plan)
+        modelo = cargar_modelo()
+        base = {"plan": plan.numero, "umbral": modelo["umbral"], "umbral_alto": max(UMBRAL_ALTO, modelo["umbral"]),
+                "metricas": modelo.get("prueba")}
         if not ajustes:
-            raise NoEncontrado("El plan activo aún no tiene ajustes semanales para estimar el riesgo")
+            # Aún no cierra su primera semana: 200 con el avance, no 404 (la pantalla muestra cuánto falta)
+            dias = min(7, max(0, (ahora().date() - plan.fecha_inicio).days))
+            return {**base, "estado": "insuficiente",
+                    "progreso": {"dias": {"actual": dias, "requeridos": 7}, "semanas": {"actual": 0, "requeridos": 1}}}
         variables = self.variables(plan, ajustes)
-        return {"plan": plan.numero, "semana": ajustes[-1].semana, "variables": variables, **predecir(variables)}
+        # Riesgo que se habría estimado al cierre de cada una de las últimas semanas
+        historial = [
+            {"semana": ajustes[k - 1].semana,
+             "probabilidad": predecir(self.variables(plan, ajustes[:k]))["probabilidad"]}
+            for k in range(max(1, len(ajustes) - SEMANAS_HISTORIAL + 1), len(ajustes) + 1)
+        ]
+        prediccion = predecir(variables)
+        return {**base, **prediccion, "estado": "listo", "semana": ajustes[-1].semana, "variables": variables,
+                "recomendaciones": recomendar(prediccion["factores"]), "historial": historial}

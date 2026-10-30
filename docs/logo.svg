@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="460" height="128" viewBox="0 0 460 128" role="img" aria-label="Focus! · Menos pantalla, más enfoque">
+  <rect width="460" height="128" rx="24" fill="#0a1832"/>
+  <g transform="translate(24 24) scale(2)" fill="none">
+    <path d="M33.6252 19.9934C33.6252 27.522 27.522 33.6252 19.9934 33.6252C12.4647 33.6252 6.36152 27.522 6.36152 19.9934C6.36152 12.4647 12.4647 6.36152 19.9934 6.36152C27.522 6.36152 33.6252 12.4647 33.6252 19.9934Z" stroke-width="5.45273" stroke="#fff"/>
+    <path d="M26.8093 19.9933C26.8093 23.7577 23.7577 26.8093 19.9933 26.8093C16.229 26.8093 13.1774 23.7577 13.1774 19.9933C13.1774 16.229 16.229 13.1774 19.9933 13.1774C23.7577 13.1774 26.8093 16.229 26.8093 19.9933Z" stroke-width="1.81758" stroke="#64748B"/>
+    <path d="M19.9933 22.4471C21.3485 22.4471 22.4471 21.3485 22.4471 19.9933C22.4471 18.6382 21.3485 17.5396 19.9933 17.5396C18.6382 17.5396 17.5396 18.6382 17.5396 19.9933C17.5396 21.3485 18.6382 22.4471 19.9933 22.4471Z" fill="#fff"/>
+    <path d="M30.8988 12.2686C32.6555 12.2686 34.0796 10.8446 34.0796 9.08789C34.0796 7.3312 32.6555 5.90713 30.8988 5.90713C29.1421 5.90713 27.7181 7.3312 27.7181 9.08789C27.7181 10.8446 29.1421 12.2686 30.8988 12.2686Z" fill="#F59E0B" stroke-width="1.81758" stroke="#0A1832"/>
+  </g>
+  <text x="120" y="70" font-family="'Plus Jakarta Sans', 'Segoe UI', Helvetica, Arial, sans-serif" font-size="46" font-weight="800" letter-spacing="-1.5" fill="#fff">FOCUS<tspan fill="#f59e0b">!</tspan></text>
+  <text x="122" y="98" font-family="'Inter', 'Segoe UI', Helvetica, Arial, sans-serif" font-size="17" fill="#94a3b8">Menos pantalla, más enfoque</text>
+</svg>

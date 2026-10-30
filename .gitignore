@@ -16,3 +16,6 @@ serverless/local.settings.json
 
 # Archivos viejos que no van al repo
 .basura/
+
+# Configuración local de Claude Code
+.claude/

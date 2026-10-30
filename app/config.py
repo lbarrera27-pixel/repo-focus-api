@@ -45,3 +45,6 @@ COMPANERO_MODELO = os.getenv("COMPANERO_MODELO", "claude-haiku-5-5")
 
 # Orígenes permitidos por CORS (separados por coma). "*" = cualquiera.
 CORS_ORIGINS = [o.strip() for o in os.getenv("CORS_ORIGINS", "*").split(",") if o.strip()]
+
+# Zona horaria de los usuarios (la BD guarda UTC). México centro = -6.
+UTC_OFFSET_HORAS = int(os.getenv("UTC_OFFSET_HORAS", "-6"))

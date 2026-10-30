@@ -150,6 +150,8 @@ def main() -> None:
         "hiperparametros": {"alfa": mejor["alfa"], "lambda": mejor["lambda"], "epocas": EPOCAS},
         "datos": {"origen": "sintético (ia/generador.py)", "semilla": SEMILLA,
                   "filas_entrenamiento": int(ent.sum())},
+        # Métricas en prueba que la API muestra junto al riesgo (qué tan confiable es el modelo)
+        "prueba": {k: round(float(prueba[k]), 4) for k in ("exactitud", "auc_roc", "precision", "recall")},
     }
     RUTA_MODELO.write_text(json.dumps(modelo, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
 

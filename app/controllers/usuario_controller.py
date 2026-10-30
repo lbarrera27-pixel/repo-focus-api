@@ -54,3 +54,9 @@ async def subir_foto(archivo: UploadFile = File(..., description="Imagen JPG, PN
         return service.subir_foto(usuario, contenido, archivo.content_type)
     except AlmacenamientoNoConfigurado:
         raise HTTPException(503, "Azure Blob Storage no está configurado en el servidor")
+
+
+@router.delete("/me/foto", status_code=status.HTTP_204_NO_CONTENT)
+def quitar_foto(usuario: Usuario = Depends(usuario_actual), service: UsuarioService = Depends(get_service)):
+    """Quita la foto de perfil (y borra la imagen si estaba en nuestro Blob Storage)."""
+    service.quitar_foto(usuario)

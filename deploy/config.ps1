@@ -17,6 +17,8 @@ $PlanApp       = "plan-focus"
 $SkuApp        = "B1"                        # F1 es gratis pero se apaga si no se usa; B1 usa creditos
 $WebApp        = "focus-api-$Sufijo"
 $FuncApp       = "focus-func-$Sufijo"
+$SitioWeb      = "focus-web-$Sufijo"         # Azure Static Web Apps (portal web)
+$UbicacionWeb  = $Ubicacion                 # Static Web Apps: centralus, eastus2, westus2, westeurope o eastasia
 
 $RaizRepo      = Split-Path -Parent $PSScriptRoot
 $ArchivoSalida = Join-Path $PSScriptRoot "salida.env"   # se genera con datos sensibles; esta en .gitignore

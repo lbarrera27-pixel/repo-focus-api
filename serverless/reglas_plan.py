@@ -78,23 +78,67 @@ def nivel_adherencia(adherencia: float) -> str:
     return max(ADHERENCIA, key=lambda nombre: trapecio(x, *ADHERENCIA[nombre]))
 
 
+def _fuerzas(adh: float, ign: float) -> list[float]:
+    """Fuerza de disparo de cada regla de REGLAS, en el mismo orden (AND = min)."""
+    return [min(trapecio(adh, *ADHERENCIA[a]), trapecio(ign, *IGNORADAS[p]) if p else 1.0)
+            for a, p, _ in REGLAS]
+
+
+def _agregado(fuerzas: list[float], z: float) -> float:
+    """Membresía de z en la salida agregada: implicación (min) y agregación (max)."""
+    return max((min(f, triangulo(z, *CAMBIO[salida])) for f, (_, _, salida) in zip(fuerzas, REGLAS) if f > 0),
+               default=0.0)
+
+
 def calcular_cambio(adherencia: float, pct_ignoradas: float = 0.0) -> tuple[float, str]:
     adh, ign = _acotar(adherencia), _acotar(pct_ignoradas)
-    # Fusificación + fuerza de disparo de cada regla (AND = min)
-    fuerzas = [
-        (min(trapecio(adh, *ADHERENCIA[a]), trapecio(ign, *IGNORADAS[p]) if p else 1.0), CAMBIO[salida])
-        for a, p, salida in REGLAS
-    ]
-    fuerzas = [(f, conjunto) for f, conjunto in fuerzas if f > 0]
-    if not fuerzas:
+    fuerzas = _fuerzas(adh, ign)
+    if not any(fuerzas):
         return 0.0, nivel_adherencia(adh)
-    # Implicación (min), agregación (max) y centroide discreto
+    # Centroide discreto de la salida agregada
     inicio, fin = RANGO_CAMBIO
     num = den = 0.0
     for i in range(round((fin - inicio) / PASO) + 1):
         z = inicio + i * PASO
-        mu = max(min(f, triangulo(z, *conjunto)) for f, conjunto in fuerzas)
+        mu = _agregado(fuerzas, z)
         num += z * mu
         den += mu
     cambio = round(num / den, 1) if den else 0.0
     return cambio + 0.0, nivel_adherencia(adh)  # + 0.0 evita devolver -0.0
+
+
+def explicar(adherencia: float, pct_ignoradas: float = 0.0, paso_grafica: float = 0.5) -> dict:
+    """Los pasos intermedios de calcular_cambio, para dibujarlos en la pantalla del plan."""
+    adh, ign = _acotar(adherencia), _acotar(pct_ignoradas)
+    fuerzas = _fuerzas(adh, ign)
+    inicio, fin = RANGO_CAMBIO
+    puntos = round((fin - inicio) / paso_grafica) + 1
+    cambio, nivel = calcular_cambio(adh, ign)
+    return {
+        "entradas": {"adherencia": adh, "pct_ignoradas": ign},
+        "membresias": {
+            "adherencia": {n: round(trapecio(adh, *c), 4) for n, c in ADHERENCIA.items()},
+            "ignoradas": {n: round(trapecio(ign, *c), 4) for n, c in IGNORADAS.items()},
+        },
+        "reglas": [
+            {"si_adherencia": a, "y_ignoradas": p, "entonces": salida,
+             "salida_pct": CAMBIO[salida][1], "fuerza": round(f, 4)}
+            for (a, p, salida), f in zip(REGLAS, fuerzas)
+        ],
+        "salida": {
+            "centroide_pct": cambio,
+            "nivel_adherencia": nivel,
+            "conjunto_agregado": [
+                [round(inicio + i * paso_grafica, 2), round(_agregado(fuerzas, inicio + i * paso_grafica), 4)]
+                for i in range(puntos)
+            ],
+        },
+    }
+
+
+def limite_vigente(plan, ajustes) -> float:
+    """Minutos diarios: el límite base con todos los ajustes semanales aplicados en orden."""
+    limite = plan.limite_base
+    for ajuste in ajustes:
+        limite *= 1 + ajuste.cambio_pct / 100
+    return limite
