@@ -59,10 +59,8 @@ RECOMENDACIONES = {
 
 def recomendar(factores: list[dict], maximo: int = 2) -> list[dict]:
     """Consejos para los factores que más SUBEN el riesgo (vienen ordenados por peso)."""
-    return [
-        {"factor": f["variable"], "titulo": RECOMENDACIONES[f["variable"]][0], "texto": RECOMENDACIONES[f["variable"]][1]}
-        for f in factores if f["efecto"] == "sube"
-    ][:maximo]
+    suben = [f["variable"] for f in factores if f["efecto"] == "sube"][:maximo]
+    return [{"factor": v, "titulo": RECOMENDACIONES[v][0], "texto": RECOMENDACIONES[v][1]} for v in suben]
 
 
 def sigmoide(z: float) -> float:
