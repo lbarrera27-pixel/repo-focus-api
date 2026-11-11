@@ -12,18 +12,22 @@ from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import func, select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.dependencies import usuario_actual
-from app.models import App, MetricaDiaria, Usuario
+from app.models import App, EventoUso, MetricaDiaria, Usuario
 from app.models._comun import ahora
+from app.repositories.ajuste_repository import AjusteRepository
 from app.repositories.app_repository import AppRepository
 from app.repositories.pausa_repository import PausaRepository
 from app.repositories.plan_repository import PlanRepository
 from app.schemas.v1 import (
-    AppHoy, DiaResumen, LimiteRespuesta, LimitesEntrada, LimitesRespuesta, ResumenRespuesta, RiesgoResumen,
+    AppHoy, DiaResumen, LimiteRespuesta, LimitesEntrada, LimitesRespuesta, LoteSesiones, PlanResumen, ResultadoSesiones,
+    ResumenRespuesta, RiesgoResumen, SemanaPlan,
 )
+from app.services.cierre_semanas import limite_tras
 from app.services.riesgo_service import RiesgoService
 from app.utils.errores import NoEncontrado
 
@@ -150,6 +154,25 @@ def resumen(
     except NoEncontrado as e:
         motivo = str(e)
 
+    anteriores = int(db.scalar(
+        select(func.sum(MetricaDiaria.minutos)).where(
+            MetricaDiaria.usuario_id == u.id,
+            MetricaDiaria.fecha >= inicio_semana - timedelta(days=7), MetricaDiaria.fecha < inicio_semana,
+        )
+    ) or 0)
+
+    plan_resumen = None
+    if plan is not None:
+        ajustes = AjusteRepository(db).listar(plan)
+        plan_resumen = PlanResumen(
+            fecha_inicio=plan.fecha_inicio,
+            # La semana en curso según la fecha (semana_actual del plan es la última ajustada)
+            semana_actual=max(1, (hoy - plan.fecha_inicio).days // 7 + 1),
+            limite_actual=round(limite_tras(ajustes[-1]) if ajustes else float(plan.limite_base), 1),
+            semanas=[SemanaPlan(semana=a.semana, uso_meta=a.uso_meta, adherencia=a.adherencia, cambio_pct=a.cambio_pct)
+                     for a in ajustes],
+        )
+
     dias_con_datos = db.scalar(
         select(func.count(func.distinct(MetricaDiaria.fecha))).where(MetricaDiaria.usuario_id == u.id)
     ) or 0
@@ -160,4 +183,49 @@ def resumen(
         semana=semana, dias_con_datos=dias_con_datos, racha_dias=racha,
         pausas_respetadas=pausas - ignoradas, pausas_ignoradas=ignoradas,
         riesgo=riesgo, riesgo_motivo=motivo,
+        semana_anterior_minutos=anteriores, plan=plan_resumen,
     )
+
+
+# ───────────── Sesiones de uso ─────────────
+
+@router.post("/sessions/sync", response_model=ResultadoSesiones)
+def sincronizar_sesiones(lote: LoteSesiones, u: Usuario = Depends(usuario_actual), db: Session = Depends(get_db)):
+    """Guarda las sesiones de uso del teléfono como eventos, que es lo que dibuja el portal web.
+
+    Idempotente: una sesión de la misma app con la misma hora de inicio no se repite.
+    Solo se guardan las apps que el usuario vigila ("Mis apps").
+    """
+    try:
+        return _guardar_sesiones(lote, u, db)
+    except IntegrityError:
+        # Otro envío en paralelo tomó los mismos números: se reintenta con los nuevos
+        db.rollback()
+        return _guardar_sesiones(lote, u, db)
+
+
+def _guardar_sesiones(lote: LoteSesiones, u: Usuario, db: Session) -> ResultadoSesiones:
+    apps = {a.paquete: a.id for a in AppRepository(db).listar(u.id) if a.paquete}
+    validas = [s for s in lote.sesiones if s.paquete in apps]
+    if not validas:
+        return ResultadoSesiones(insertadas=0, omitidas=len(lote.sesiones))
+    desde, hasta = min(s.inicio for s in validas), max(s.inicio for s in validas)
+    existentes = set(db.execute(
+        select(EventoUso.app_id, EventoUso.inicio)
+        .where(EventoUso.usuario_id == u.id, EventoUso.inicio >= desde, EventoUso.inicio <= hasta)
+    ).all())
+    numero = (db.scalar(select(func.max(EventoUso.numero)).where(EventoUso.usuario_id == u.id)) or 0) + 1
+    insertadas = 0
+    for s in sorted(validas, key=lambda s: s.inicio):
+        clave = (apps[s.paquete], s.inicio)
+        if clave in existentes:
+            continue
+        existentes.add(clave)
+        db.add(EventoUso(
+            usuario_id=u.id, numero=numero, app_id=apps[s.paquete], inicio=s.inicio, fin=s.fin,
+            duracion_seg=int((s.fin - s.inicio).total_seconds()),
+        ))
+        numero += 1
+        insertadas += 1
+    db.commit()
+    return ResultadoSesiones(insertadas=insertadas, omitidas=len(lote.sesiones) - insertadas)

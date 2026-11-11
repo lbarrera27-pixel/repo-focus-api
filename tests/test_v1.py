@@ -82,7 +82,12 @@ def test_resumen_con_metricas_y_plan(client, auth):
     assert len(s["semana"]) == 7 and s["semana"][-1]["minutos"] == 95
     assert s["dias_con_datos"] == 3
     assert s["racha_dias"] == 3                             # 40, 50 y 95 ≤ 100
-    assert s["riesgo"] is None and "ajustes" in s["riesgo_motivo"]
+    # La semana 1 del plan (del 1 al 7 de noviembre) se cierra sola con estas métricas al terminar
+    from datetime import date
+    if date.today() >= date(2026, 11, 8):
+        assert s["riesgo"] is not None and s["plan"]["semanas"][0]["semana"] == 1
+    else:
+        assert s["riesgo"] is None and "ajustes" in s["riesgo_motivo"]
 
     # Hoy aún sin sincronizar: la racha sigue viva desde ayer; con un día entero sin datos, se corta
     siguiente = client.get("/api/v1/users/me/summary?fecha=2026-11-07", headers=auth).json()
@@ -118,3 +123,56 @@ def test_migracion_agrega_columnas_a_tabla_vieja():
     assert {"limite_minutos", "nivel", "vigilada", "actualizado"} <= columnas
     fila = sqlite3.connect(viejo).execute("SELECT nivel, vigilada FROM app").fetchone()
     assert fila == (2, 1)
+
+
+def _cuenta(client, email):
+    client.post("/auth/registro", json={"email": email, "nombre": "C", "password": "secreto123"})
+    token = client.post("/auth/login", json={"email": email, "password": "secreto123"}).json()["access_token"]
+    return {"Authorization": f"Bearer {token}"}
+
+
+def test_las_semanas_terminadas_se_cierran_solas_y_dan_riesgo(client):
+    from datetime import date, timedelta
+
+    auth = _cuenta(client, "cierre@focus.app")
+    hoy = date.today()
+    inicio = hoy - timedelta(days=15)
+    client.post("/planes", headers=auth, json={"fecha_inicio": str(inicio), "limite_base": 100})
+    # Semana 1: 5 de 7 días dentro de 100 min; semana 2: todos dentro
+    dias = []
+    for i in range(14):
+        minutos = 150 if i in (1, 4) else 80
+        dias.append({"fecha": str(inicio + timedelta(days=i)), "apps": [{"paquete": "com.zhiliaoapp.musically", "minutos": minutos, "aperturas": 5}]})
+    assert client.post("/api/v1/metrics/sync", json={"lote_id": "cierre-001", "dias": dias}, headers=auth).status_code == 200
+
+    plan = client.get("/planes/activo", headers=auth).json()
+    ajustes = client.get(f"/planes/{plan['numero']}/ajustes", headers=auth).json()
+    assert [a["semana"] for a in ajustes] == [1, 2]
+    assert ajustes[0]["adherencia"] == round(5 / 7, 3) and ajustes[0]["uso_meta"] == 100
+    # La semana 2 usa el límite que dejó el ajuste de la 1
+    assert ajustes[1]["uso_meta"] == round(100 * (1 + ajustes[0]["cambio_pct"] / 100), 1)
+
+    # Reenviar no duplica ajustes
+    client.post("/api/v1/metrics/sync", json={"lote_id": "cierre-002", "dias": dias}, headers=auth)
+    assert len(client.get(f"/planes/{plan['numero']}/ajustes", headers=auth).json()) == 2
+
+    s = client.get(f"/api/v1/users/me/summary?fecha={hoy}", headers=auth).json()
+    assert s["riesgo"] is not None
+    assert [x["semana"] for x in s["plan"]["semanas"]] == [1, 2] and s["plan"]["limite_actual"] > 0
+    assert s["semana_anterior_minutos"] > 0
+    assert s["plan"]["semana_actual"] == 3   # empezó hace 15 días
+
+
+def test_sesiones_del_telefono_llegan_como_eventos_sin_duplicarse(client):
+    auth = _cuenta(client, "sesiones@focus.app")
+    client.put("/api/v1/apps/limits", json={"apps": [TIKTOK]}, headers=auth)
+    lote = {"sesiones": [
+        {"paquete": TIKTOK["paquete"], "inicio": "2026-11-08T19:00:00", "fin": "2026-11-08T19:25:00"},
+        {"paquete": TIKTOK["paquete"], "inicio": "2026-11-08T21:10:00", "fin": "2026-11-08T21:15:00"},
+        {"paquete": "com.no.vigilada", "inicio": "2026-11-08T20:00:00", "fin": "2026-11-08T20:30:00"},
+    ]}
+    r = client.post("/api/v1/sessions/sync", json=lote, headers=auth).json()
+    assert r == {"insertadas": 2, "omitidas": 1}
+    assert client.post("/api/v1/sessions/sync", json=lote, headers=auth).json()["insertadas"] == 0
+    eventos = client.get("/eventos", headers=auth).json()
+    assert [e["duracion_seg"] for e in eventos] == [1500, 300] and [e["numero"] for e in eventos] == [1, 2]

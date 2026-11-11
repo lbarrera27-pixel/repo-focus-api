@@ -9,7 +9,9 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.dependencies import usuario_actual
 from app.models import MetricaDiaria, Usuario
+from app.models._comun import ahora
 from app.schemas.metricas import LoteMetricas, ResultadoSync
+from app.services.cierre_semanas import cerrar_semanas
 
 router = APIRouter(prefix="/api/v1/metrics", tags=["Métricas (sincronización)"])
 log = logging.getLogger("focus.metricas")
@@ -24,11 +26,18 @@ def sincronizar(lote: LoteMetricas, u: Usuario = Depends(usuario_actual), db: Se
     Todo el lote se guarda en una sola transacción.
     """
     try:
-        return _guardar(lote, u, db)
+        resultado = _guardar(lote, u, db)
     except IntegrityError:
         # Otro envío del mismo teléfono insertó esas filas en paralelo: ahora existen, se actualizan
         db.rollback()
-        return _guardar(lote, u, db)
+        resultado = _guardar(lote, u, db)
+    # Con el uso nuevo se cierran las semanas del plan que ya terminaron (ajuste + reglas difusas)
+    try:
+        cerrar_semanas(db, u.id, ahora().date())
+    except Exception:  # noqa: BLE001 - el lote ya quedó guardado; el cierre se reintenta en el siguiente
+        db.rollback()
+        log.exception("No se pudieron cerrar las semanas del usuario %s", u.id)
+    return resultado
 
 
 def _guardar(lote: LoteMetricas, u: Usuario, db: Session) -> ResultadoSync:

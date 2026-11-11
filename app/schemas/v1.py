@@ -73,6 +73,20 @@ class RiesgoResumen(BaseModel):
     semana: int
 
 
+class SemanaPlan(BaseModel):
+    semana: int
+    uso_meta: float = Field(..., description="Límite diario de esa semana (minutos)")
+    adherencia: float
+    cambio_pct: float = Field(..., description="Cambio que las reglas difusas aplicaron al límite siguiente")
+
+
+class PlanResumen(BaseModel):
+    fecha_inicio: date
+    semana_actual: int
+    limite_actual: float = Field(..., description="Límite diario vigente (minutos), ya con los ajustes")
+    semanas: list[SemanaPlan]
+
+
 class ResumenRespuesta(BaseModel):
     fecha: date = Field(..., description="Día de FOCUS! consultado (empieza a las 06:00 hora local)")
     meta_diaria_minutos: Optional[int] = Field(None, description="Límite base del plan activo")
@@ -87,3 +101,32 @@ class ResumenRespuesta(BaseModel):
     pausas_ignoradas: int
     riesgo: Optional[RiesgoResumen] = Field(None, description="null mientras el modelo no tenga datos")
     riesgo_motivo: Optional[str] = Field(None, description="Por qué no hay riesgo todavía")
+    semana_anterior_minutos: int = Field(0, description="Minutos de los 7 días anteriores a 'semana' (para comparar)")
+    plan: Optional[PlanResumen] = None
+
+
+# ───────────── Sesiones de uso (para el portal web) ─────────────
+
+class SesionUso(BaseModel):
+    paquete: str = Field(..., max_length=255, pattern=PATRON_PAQUETE, examples=["com.instagram.android"])
+    inicio: datetime = Field(..., description="Hora local del teléfono", examples=["2026-11-09T19:05:00"])
+    fin: datetime = Field(..., examples=["2026-11-09T19:32:00"])
+
+    @model_validator(mode="after")
+    def rango(self):
+        if self.fin <= self.inicio:
+            raise ValueError("fin debe ser posterior a inicio")
+        if (self.fin - self.inicio).total_seconds() > 24 * 3600:
+            raise ValueError("una sesión no puede durar más de un día")
+        return self
+
+
+class LoteSesiones(BaseModel):
+    """Sesiones en primer plano de las apps vigiladas (las demás se ignoran)."""
+
+    sesiones: list[SesionUso] = Field(..., max_length=5000)
+
+
+class ResultadoSesiones(BaseModel):
+    insertadas: int
+    omitidas: int = Field(..., description="Ya existían o son de apps que el usuario no vigila")
